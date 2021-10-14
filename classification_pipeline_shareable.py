@@ -4,25 +4,22 @@ import igraph
 import networkx as nx
 import pandas as pd
 import numpy as np
-import json
 import csv
 import ast
 from operator import itemgetter
-from igraph import *
-import re
 from karateclub import Graph2Vec
 import xgboost as xgb
 
 #Fill in your creds here
-access_token = ""
-access_token_secret = ""
+access_token = "3116746893-TrkwnQhFLKRPoYJ64NmHLtOMGRKu9tiK7cdI21u"
+access_token_secret = "DqAolHppLDJ9COKwHEGJjTxl6jKggMZH7ZTTxhNSgDZAi"
 
-consumer_key = ""
-consumer_secret = ""
+consumer_key = "r6AvKS8qtSgdx5FvoQhgNXYvO"
+consumer_secret = "mq4pieXWQSVJZutZkdX1UN45VejZQt0EjnMAAcaOXwhZBtrFeK"
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
-api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+api = tweepy.API(auth, wait_on_rate_limit=True)
 
 
 #1. GML (and CSV) creation
@@ -31,66 +28,66 @@ api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 # Credit to Jacob Moore
 class TweetGrabber():
 	
-	def __init__(self,myApi,sApi,at,sAt):
-		self.tweepy = tweepy
-		auth = tweepy.OAuthHandler(myApi, sApi)
-		auth.set_access_token(at, sAt)
-		self.api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+    def __init__(self,myApi,sApi,at,sAt):
+        self.tweepy = tweepy
+        auth = tweepy.OAuthHandler(myApi, sApi)
+        auth.set_access_token(at, sAt)
+        self.api = tweepy.API(auth, wait_on_rate_limit=True)
 		
 	#Return the string without non ASCII characters
-	def strip_non_ascii(self,string):
+    def strip_non_ascii(self,string):
 		
-		stripped = (c for c in string if 0 < ord(c) < 127)
-		return ''.join(stripped)  
+        stripped = (c for c in string if 0 < ord(c) < 127)
+        return ''.join(stripped)  
 		
-	def user_search(self,user,csv_prefix):
-		API_results = self.tweepy.Cursor(self.api.user_timeline,id=user,tweet_mode='extended').items()
+    def user_search(self,user,csv_prefix):
+        API_results = self.tweepy.Cursor(self.api.user_timeline,screen_name=user,tweet_mode='extended').items()
 
-		with open(f'{csv_prefix}.csv', 'w', newline='') as csvfile:
-			fieldnames = ['tweet_id', 'tweet_text', 'date', 'user_id', 'user_mentions', 'retweet_count']
-			writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-			writer.writeheader()
+        with open(f'{csv_prefix}.csv', 'w', newline='') as csvfile:
+            fieldnames = ['tweet_id', 'tweet_text', 'date', 'user_id', 'user_mentions', 'retweet_count']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
 
-			for tweet in API_results:
-				text = self.strip_non_ascii(tweet.full_text)
-				date = tweet.created_at.strftime('%m/%d/%Y')        
-				writer.writerow({
+            for tweet in API_results:
+                text = self.strip_non_ascii(tweet.full_text)
+                date = tweet.created_at.strftime('%m/%d/%Y')        
+                writer.writerow({
 								'tweet_id': tweet.id_str,
 								'tweet_text': text,
 								'date': date,
 								'user_id': tweet.user.id_str,
 								'user_mentions':tweet.entities['user_mentions'],
-								'retweet_count': tweet.retweet_count
-								})
+                                'retweet_count': tweet.retweet_count
+                                })
 
 # Process the created CSV in order to generate edge list
 class RetweetParser():
 	
-	def __init__(self,data,user):
-		self.user = user
+    def __init__(self,data,user):
+        self.user = user
 
-		edge_list = []
+        edge_list = []
 	
-		for idx,row in data.iterrows():
-			if len(row[4]) > 5:    
-				user_account = user
-				weight = np.log(row[5] + 1)
-				for idx_1, item in enumerate(ast.literal_eval(row[4])):
-					edge_list.append((user_account,item['screen_name'],weight))
+        for idx,row in data.iterrows():
+            if len(row[4]) > 5:    
+                user_account = user
+                weight = np.log(row[5] + 1)
+                for idx_1, item in enumerate(ast.literal_eval(row[4])):
+                    edge_list.append((user_account,item['screen_name'],weight))
 
-					for idx_2 in range(idx_1+1,len(ast.literal_eval(row[4]))):
-						name_a = ast.literal_eval(row[4])[idx_1]['screen_name']
-						name_b = ast.literal_eval(row[4])[idx_2]['screen_name']
+                    for idx_2 in range(idx_1+1,len(ast.literal_eval(row[4]))):
+                        name_a = ast.literal_eval(row[4])[idx_1]['screen_name']
+                        name_b = ast.literal_eval(row[4])[idx_2]['screen_name']
 
-						edge_list.append((name_a,name_b,weight))
+                        edge_list.append((name_a,name_b,weight))
 		
-		with open(f'{self.user}.csv', 'w', newline='') as csvfile:
-			fieldnames = ['user_a', 'user_b', 'log_retweet']
-			writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-			writer.writeheader()
+        with open(f'{self.user}.csv', 'w', newline='') as csvfile:
+            fieldnames = ['user_a', 'user_b', 'log_retweet']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
 
-			for row in edge_list:        
-				writer.writerow({
+            for row in edge_list:        
+                writer.writerow({
 								'user_a': row[0],
 								'user_b': row[1],
 								'log_retweet': row[2]
@@ -106,7 +103,7 @@ class TweetGraph():
 	def e_centrality(self):
 		vectors = self.tuple_graph.eigenvector_centrality()
 		e = {name:cen for cen, name in  zip([v for v in vectors],self.tuple_graph.vs['name'])}
-		return sorted(e.items(), key=operator.itemgetter(1),reverse=True)
+		return sorted(e.items(), key=itemgetter(1),reverse=True)
 
 
 # Instantiation
@@ -125,40 +122,42 @@ try:
 	existing_gml = igraph.read(screen_name + '.gml')
 	print(screen_name + '.gml already exists.')
 except FileNotFoundError:
-	try:
-		print("Scanning activity...")
-		# Collect the user's mentions into a CSV titled with their username
-		t.user_search(user=screen_name, csv_prefix=screen_name)
-
+    try:
+        print("Scanning activity...")
+        try:
+    		# Collect the user's mentions into a CSV titled with their username
+            t.user_search(user=screen_name, csv_prefix=screen_name)
+        except:
+            print("error writing to csv")
 		# Read the created CSV into a pandas DataFrame for input to RetweetParser class
-		userFrame = pd.read_csv(screen_name + ".csv")
+        userFrame = pd.read_csv(screen_name + ".csv")
 
 		# RetweetParser overwrites the first CSV with a weighted edgelist
-		r = RetweetParser(userFrame, screen_name)
+        r = RetweetParser(userFrame, screen_name)
 
 		# The weighted, undirected iGraph object
-		log_graph = TweetGraph(edge_list= screen_name + ".csv")
+        log_graph = TweetGraph(edge_list= screen_name + ".csv")
 
 		# Add 'size' attribute to each vertex based on its Eigencentrality
 		# NOTE: multiplying the value by some consistent large number creates a more intuitive
 		# plot, viewing-wise, but doesn't impact classification, since this change is applied
 		# to all vertices
-		for key, value in log_graph.e_centrality():
-			log_graph.tuple_graph.vs.find(name=key)['size'] = value*20
+        for key, value in log_graph.e_centrality():
+            log_graph.tuple_graph.vs.find(name=key)['size'] = value*20
 
 		# Save the graph in GML format
-		print("Building gml...")
-		log_graph.tuple_graph.write_gml(f=screen_name+".gml")
+        print("Building gml...")
+        log_graph.tuple_graph.write_gml(f=screen_name+".gml")
 
 		# Plot the graph for viewing
-		# style = {}
-		# style["edge_curved"] = False
-		# style["vertex_label"] = m_graph.tuple_graph.vs['name']
-		# style["vertex_label_size"] = 5
-		# plot(m_graph.tuple_graph, **style)
+        # style = {}
+        # style["edge_curved"] = False
+        # style["vertex_label"] = m_graph.tuple_graph.vs['name']
+        # style["vertex_label_size"] = 5
+        # plot(m_graph.tuple_graph, **style)
 
-	except:
-		print(screen_name + ' graphing failed.')
+    except:
+        print(screen_name + ' graphing failed.')
 
 
 # 2. GML conversion to Graph2Vec vector
@@ -190,7 +189,7 @@ convertedgraph = nx.convert_node_labels_to_integers(H)
 # instantiating the model (see the above link to the Karate Club library),
 # but I found 64 feature columns and otherwise default parameters
 # to provide the best results
-embedding_model = Graph2Vec(dimensions=64)
+embedding_model = Graph2Vec(dimensions=64, min_count=1)
 
 # Now, fit the model to the NetworkX graph, and store the embedding
 # in a pandas DataFrame
@@ -202,10 +201,10 @@ embeddingsframe = pd.DataFrame(embedding_model.get_embedding())
 # and output prediction and plot of user's GML representation
 
 #Load classification model and make a prediction
-classification_model = xgb.XGBClassifier(objective="binary:logistic", random_state=42, learning_rate = 0.05, n_estimators = 5000, early_stopping_rounds = 10)
+classification_model = xgb.XGBClassifier(objective="binary:logistic")
 classification_model.load_model('graph_classifier_3.json')
 print("Predicting...")
-pred = classification_model.predict(embeddingsframe)
+pred = classification_model.predict(embeddingsframe, base_margin=[7.75042])
 
 print(screen_name + ': ' + pred[0])
 
