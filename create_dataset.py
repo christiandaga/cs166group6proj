@@ -20,6 +20,9 @@ auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth, wait_on_rate_limit=True)
 
 #obtain fields from accounts using api client
+i = twitter_dataframe["id"][0]
+print(i)
+api.get_user(i)
 
 #insert profile data points into corresponding rows
 
