@@ -9,13 +9,13 @@ import ast
 from operator import itemgetter
 from karateclub import Graph2Vec
 import xgboost as xgb
+import config
 
 #Fill in your creds here
-access_token = "3116746893-TrkwnQhFLKRPoYJ64NmHLtOMGRKu9tiK7cdI21u"
-access_token_secret = "DqAolHppLDJ9COKwHEGJjTxl6jKggMZH7ZTTxhNSgDZAi"
-
-consumer_key = "r6AvKS8qtSgdx5FvoQhgNXYvO"
-consumer_secret = "mq4pieXWQSVJZutZkdX1UN45VejZQt0EjnMAAcaOXwhZBtrFeK"
+access_token = config.access_token
+access_token_secret = config.access_token_secret
+consumer_key = config.consumer_key
+consumer_secret = config.consumer_secret
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
