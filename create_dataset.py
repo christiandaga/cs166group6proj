@@ -4,7 +4,7 @@ import tweepy
 import config
 
 #The number of additional twitter users you want to add to the output.csv
-numNewData = 10
+numNewData = 1000
 
 #configure token stuff
 access_token = config.access_token
@@ -36,6 +36,10 @@ def addData(startIndex, numElements, dataframe):
             }
             print(current_user)
             dataframe = dataframe.append(current_user, ignore_index=True)
+
+            #Save every 200 datapoints incase we get rate limited dont want to lose all progress from that run
+            if x % 200 == 0:
+                dataframe.to_csv("output.csv", sep='\t')
         except Exception as err:
             print("Error:", err)
     return dataframe
