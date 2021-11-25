@@ -1,11 +1,15 @@
-# Twitter-graph-classification
-Using Graph2Vec and XGBoost to build a classification model for labeling twitter users
+# CS 166 Group 6 Project
 
-To run classification_pipeline_shareable.py, you'll first need to input your twitter 
-developer credentials where instructed on lines 17-22. 
+Using XGBoost to build a classification model for finding the botness twitter users
 
-Once done, the script takes one command-line argument at runtime, which is the name of 
-the Twitter user being classified, and outputs a string labeling them as either a bot or human.
-Formatting is as follows:
+## Running
 
-python classification_pipeline_shareable.py A_TWITTER_HANDLE
+```python predict.py {TWITTER_ID}```
+
+The twitter id can be found by using this tool: [Find Twitter ID](https://codeofaninja.com/tools/find-twitter-id/)
+
+## Training
+
+trained_model.json is the currently trained model.
+
+Modifying train_model.py and running it will output a new model to be used by predict.py
