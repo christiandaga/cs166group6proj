@@ -5,9 +5,6 @@ Using XGBoost to build a classification model for finding the botness twitter us
 ## Running
 
 ```python predict.py {TWITTER_ID}```
-
-The twitter id can be found by using this tool: [Find Twitter ID](https://codeofaninja.com/tools/find-twitter-id/)
-
 ## Training
 
 trained_model.json is the currently trained model.
