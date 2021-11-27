@@ -1,6 +1,8 @@
 # CS 166 Group 6 Project
 
-Using XGBoost to build a classification model for finding the botness twitter users
+Using XGBoost to build a classification model to determine whether a given Twitter USer is a bot or human (not a bot)
+
+Create dataset.py & create_dataset.ipynb are used to add more datapoints to the csv we originally obtained from kaggle -> created "output.csv" as our dataset that we input into the model
 
 ## Running
 
