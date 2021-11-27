@@ -1,12 +1,11 @@
-import numpy as np
 import pandas as pd
 import tweepy
 import config
 
-#The number of additional twitter users you want to add to the output.csv
+#Twitter users added to output.csv
 numNewData = 3000
 
-#configure token stuff
+#Tokens
 access_token = config.access_token
 access_token_secret = config.access_token_secret
 consumer_key = config.consumer_key
@@ -16,7 +15,7 @@ auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth, parser=tweepy.parsers.JSONParser(), wait_on_rate_limit=True)
 
-#load kaggle dataset into a input dataframe
+#Load Kaggle dataset into an input dataframe
 input_dataframe = pd.read_csv("twitter_human_bots_dataset.csv")
 
 def addData(startIndex, numElements, dataframe):
@@ -24,6 +23,7 @@ def addData(startIndex, numElements, dataframe):
         try:
             user_id = input_dataframe["id"][x]
             twitter_user = api.get_user(params={"user_id":user_id})
+            #Parsing the data
             current_user = {
                 "id" : user_id,
                 "name": twitter_user["name"],
@@ -37,7 +37,7 @@ def addData(startIndex, numElements, dataframe):
             print(current_user)
             dataframe = dataframe.append(current_user, ignore_index=True)
 
-            #Save every 100 datapoints incase we get rate limited dont want to lose all progress from that run
+            #Saves every 100 datapoints for fallback
             if x % 100 == 0:
                 dataframe.to_csv("output.csv", sep='\t')
         except Exception as err:
@@ -56,5 +56,5 @@ except FileNotFoundError:
     output_dataframe = pd.DataFrame(columns=header_list)
     output_dataframe = addData(0, numNewData, output_dataframe)
 
-
+#Final csv output file
 output_dataframe.to_csv("output.csv", sep='\t')
